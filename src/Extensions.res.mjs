@@ -16,7 +16,10 @@ var $$Array = {
   sequence: sequence
 };
 
+var Dom = {};
+
 export {
   $$Array ,
+  Dom ,
 }
 /* No side effect */

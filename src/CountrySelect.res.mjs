@@ -2,6 +2,7 @@
 
 import * as Fetch from "./Fetch.res.mjs";
 import * as React from "react";
+import * as Core__Int from "@rescript/core/src/Core__Int.res.mjs";
 import * as Core__JSON from "@rescript/core/src/Core__JSON.res.mjs";
 import * as Extensions from "./Extensions.res.mjs";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
@@ -43,26 +44,71 @@ function reducer(state, action) {
     } else {
       return state;
     }
-  } else if (action.TAG === "Load") {
-    if (typeof state !== "object" && state === "Loading") {
-      return {
-              TAG: "Loaded",
-              countryOptions: action._0,
-              searchInput: ""
-            };
-    } else {
-      return state;
-    }
-  } else if (typeof state !== "object") {
-    return state;
-  } else {
-    return {
-            TAG: "Loaded",
-            countryOptions: state.countryOptions,
-            searchInput: action._0
-          };
+  }
+  switch (action.TAG) {
+    case "Load" :
+        if (typeof state !== "object" && state === "Loading") {
+          return {
+                  TAG: "Loaded",
+                  countryOptions: action._0,
+                  searchInput: "",
+                  optionsViewportStart: 0,
+                  optionsViewportEnd: 19
+                };
+        } else {
+          return state;
+        }
+    case "SetSearchInput" :
+        if (typeof state !== "object") {
+          return state;
+        } else {
+          return {
+                  TAG: "Loaded",
+                  countryOptions: state.countryOptions,
+                  searchInput: action._0,
+                  optionsViewportStart: state.optionsViewportStart,
+                  optionsViewportEnd: state.optionsViewportEnd
+                };
+        }
+    case "SetOptionsViewport" :
+        if (typeof state !== "object") {
+          return state;
+        } else {
+          return {
+                  TAG: "Loaded",
+                  countryOptions: state.countryOptions,
+                  searchInput: state.searchInput,
+                  optionsViewportStart: action.optionsViewportStart,
+                  optionsViewportEnd: action.optionsViewportEnd
+                };
+        }
+    
   }
 }
+
+function CountrySelect$CountryOption(props) {
+  var label = props.label;
+  console.log(label);
+  return JsxRuntime.jsxs("div", {
+              children: [
+                JsxRuntime.jsx("span", {
+                      className: "fi fi-" + props.value
+                    }),
+                label
+              ],
+              className: css["country-option"],
+              style: {
+                position: "absolute",
+                top: props.top,
+                width: "100%"
+              },
+              onClick: props.onClick
+            });
+}
+
+var CountryOption = {
+  make: CountrySelect$CountryOption
+};
 
 function CountrySelect(props) {
   var onChange = props.onChange;
@@ -76,6 +122,7 @@ function CountrySelect(props) {
           Fetch.get("https://gist.githubusercontent.com/rusty-key/659db3f4566df459bd59c8a53dc9f71f/raw/4127f9550ef063121c564025f6d27dceeb279623/counties.json", Caml_option.some(controller.signal)).then(function (prim) {
                   return prim.json();
                 }).then(function (json) {
+                console.log(json);
                 var countries = parseCountries(json);
                 if (countries !== undefined) {
                   return dispatch({
@@ -90,6 +137,16 @@ function CountrySelect(props) {
                     controller.abort();
                   });
         }), []);
+  var onScroll = function (param) {
+    Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
+            var optionsViewportStart = viewport.scrollTop / 27 | 0;
+            dispatch({
+                  TAG: "SetOptionsViewport",
+                  optionsViewportStart: optionsViewportStart,
+                  optionsViewportEnd: (optionsViewportStart + 20 | 0) - 1 | 0
+                });
+          }));
+  };
   if (typeof state !== "object") {
     switch (state) {
       case "Initial" :
@@ -101,8 +158,12 @@ function CountrySelect(props) {
       
     }
   } else {
+    var optionsViewportStart = state.optionsViewportStart;
     var searchInput = state.searchInput;
     var countryOptions = state.countryOptions;
+    var countryOptionsFiltered = countryOptions.filter(function (countryOption) {
+          return countryOption.label.toLowerCase().includes(searchInput.trim().toLowerCase());
+        });
     return JsxRuntime.jsxs("div", {
                 children: [
                   JsxRuntime.jsx("div", {
@@ -132,34 +193,40 @@ function CountrySelect(props) {
                           })
                       }),
                   JsxRuntime.jsx("div", {
-                        children: countryOptions.filter(function (countryOption) {
-                                return countryOption.label.toLowerCase().includes(searchInput.trim().toLowerCase());
-                              }).map(function (countryOption) {
-                              return JsxRuntime.jsxs("div", {
-                                          children: [
-                                            JsxRuntime.jsx("span", {
-                                                  className: "fi fi-" + countryOption.value
-                                                }),
-                                            " ",
-                                            countryOption.label
-                                          ],
-                                          onClick: (function (param) {
-                                              onChange(countryOption.value);
-                                            })
-                                        });
+                        children: JsxRuntime.jsx("div", {
+                              children: countryOptionsFiltered.slice(Core__Int.clamp(0, undefined, optionsViewportStart - 10 | 0), (state.optionsViewportEnd + 1 | 0) + 10 | 0).map(function (countryOption, index) {
+                                    return JsxRuntime.jsx(CountrySelect$CountryOption, {
+                                                label: countryOption.label,
+                                                value: countryOption.value,
+                                                onClick: (function (param) {
+                                                    onChange(countryOption.value);
+                                                  }),
+                                                top: Math.imul(optionsViewportStart + index | 0, 27).toString() + "px"
+                                              }, countryOption.value);
+                                  }),
+                              style: {
+                                height: Math.imul(countryOptionsFiltered.length, 27).toString() + "px",
+                                position: "absolute",
+                                width: "100%"
+                              }
                             }),
                         ref: Caml_option.some(viewportRef),
                         className: css.dropdown,
-                        onScroll: (function (param) {
-                            Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
-                                    console.log(viewport.scrollTop);
-                                  }));
-                          })
+                        style: {
+                          height: Math.imul(Math.min(countryOptionsFiltered.length, 20), 27).toString() + "px"
+                        },
+                        onScroll: onScroll
                       })
                 ]
               });
   }
 }
+
+var maxVisibleCountryOptions = 20;
+
+var renderOutOfViewport = 10;
+
+var countryOptionHeight = 27;
 
 var initialState = "Initial";
 
@@ -167,9 +234,13 @@ var make = CountrySelect;
 
 export {
   css ,
+  maxVisibleCountryOptions ,
+  renderOutOfViewport ,
+  countryOptionHeight ,
   parseCountries ,
   reducer ,
   initialState ,
+  CountryOption ,
   make ,
 }
 /* css Not a pure module */

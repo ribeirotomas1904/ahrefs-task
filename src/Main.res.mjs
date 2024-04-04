@@ -8,6 +8,9 @@ import * as JsxRuntime from "react/jsx-runtime";
 import "/node_modules/flag-icons/css/flag-icons.min.css";
 ;
 
+import "./globalStyles.css";
+;
+
 var domElement = document.querySelector("#root");
 
 if (!(domElement == null)) {
