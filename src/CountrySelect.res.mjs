@@ -7,6 +7,9 @@ import * as Extensions from "./Extensions.res.mjs";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
 import * as Core__Option from "@rescript/core/src/Core__Option.res.mjs";
 import * as JsxRuntime from "react/jsx-runtime";
+import CountrySelectModuleCss from "./CountrySelect.module.css";
+
+var css = CountrySelectModuleCss;
 
 function parseCountries(json) {
   return Core__Option.flatMap(Core__JSON.Decode.array(json), (function (value) {
@@ -40,20 +43,33 @@ function reducer(state, action) {
     } else {
       return state;
     }
-  } else if (typeof state !== "object" && state === "Loading") {
+  } else if (action.TAG === "Load") {
+    if (typeof state !== "object" && state === "Loading") {
+      return {
+              TAG: "Loaded",
+              countryOptions: action._0,
+              searchInput: ""
+            };
+    } else {
+      return state;
+    }
+  } else if (typeof state !== "object") {
+    return state;
+  } else {
     return {
             TAG: "Loaded",
-            _0: action._0
+            countryOptions: state.countryOptions,
+            searchInput: action._0
           };
-  } else {
-    return state;
   }
 }
 
 function CountrySelect(props) {
+  var onChange = props.onChange;
   var match = React.useReducer(reducer, "Initial");
   var dispatch = match[1];
   var state = match[0];
+  var viewportRef = React.useRef(null);
   React.useEffect((function () {
           var controller = new AbortController();
           dispatch("StartLoading");
@@ -74,29 +90,74 @@ function CountrySelect(props) {
                     controller.abort();
                   });
         }), []);
-  if (typeof state === "object") {
-    return JsxRuntime.jsx("div", {
-                children: state._0.map(function (country) {
-                      return JsxRuntime.jsxs("div", {
-                                  children: [
-                                    JsxRuntime.jsx("span", {
-                                          className: "fi fi-" + country.value
-                                        }),
-                                    " ",
-                                    country.label
-                                  ]
+  if (typeof state !== "object") {
+    switch (state) {
+      case "Initial" :
+          return "initial";
+      case "Loading" :
+          return "loading";
+      case "Error" :
+          return "error";
+      
+    }
+  } else {
+    var searchInput = state.searchInput;
+    var countryOptions = state.countryOptions;
+    return JsxRuntime.jsxs("div", {
+                children: [
+                  JsxRuntime.jsx("div", {
+                        children: Core__Option.getOr(Core__Option.flatMap(Core__Option.flatMap(props.country, (function (country) {
+                                        return countryOptions.find(function (countryOption) {
+                                                    return countryOption.value === country;
+                                                  });
+                                      })), (function (countryOption) {
+                                    return Caml_option.some(JsxRuntime.jsxs("div", {
+                                                    children: [
+                                                      JsxRuntime.jsx("span", {
+                                                            className: "fi fi-" + countryOption.value
+                                                          }),
+                                                      " ",
+                                                      countryOption.label
+                                                    ]
+                                                  }));
+                                  })), null)
+                      }),
+                  JsxRuntime.jsx("input", {
+                        value: searchInput,
+                        onChange: (function (e) {
+                            dispatch({
+                                  TAG: "SetSearchInput",
+                                  _0: e.target.value
                                 });
-                    })
+                          })
+                      }),
+                  JsxRuntime.jsx("div", {
+                        children: countryOptions.filter(function (countryOption) {
+                                return countryOption.label.toLowerCase().includes(searchInput.trim().toLowerCase());
+                              }).map(function (countryOption) {
+                              return JsxRuntime.jsxs("div", {
+                                          children: [
+                                            JsxRuntime.jsx("span", {
+                                                  className: "fi fi-" + countryOption.value
+                                                }),
+                                            " ",
+                                            countryOption.label
+                                          ],
+                                          onClick: (function (param) {
+                                              onChange(countryOption.value);
+                                            })
+                                        });
+                            }),
+                        ref: Caml_option.some(viewportRef),
+                        className: css.dropdown,
+                        onScroll: (function (param) {
+                            Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
+                                    console.log(viewport.scrollTop);
+                                  }));
+                          })
+                      })
+                ]
               });
-  }
-  switch (state) {
-    case "Initial" :
-        return "initial";
-    case "Loading" :
-        return "loading";
-    case "Error" :
-        return "error";
-    
   }
 }
 
@@ -105,9 +166,10 @@ var initialState = "Initial";
 var make = CountrySelect;
 
 export {
+  css ,
   parseCountries ,
   reducer ,
   initialState ,
   make ,
 }
-/* react Not a pure module */
+/* css Not a pure module */
