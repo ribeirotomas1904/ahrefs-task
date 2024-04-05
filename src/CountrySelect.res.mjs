@@ -91,7 +91,8 @@ function reducer(state, action) {
                 };
         }
     case "SetIsDropdownOpen" :
-        if (typeof state !== "object") {
+        var isDropdownOpen = action._0;
+        if (typeof state !== "object" || state.isDropdownOpen === isDropdownOpen) {
           return state;
         } else {
           return {
@@ -100,7 +101,7 @@ function reducer(state, action) {
                   searchInput: "",
                   optionsViewportStart: 0,
                   optionsViewportEnd: 13,
-                  isDropdownOpen: action._0,
+                  isDropdownOpen: isDropdownOpen,
                   countryOptionHeight: state.countryOptionHeight,
                   selectedCountryOption: 0
                 };
@@ -365,7 +366,7 @@ function CountrySelect(props) {
                                                                   behavior: "instant"
                                                                 });
                                                           }));
-                                                  } else if (newSelectedCountryOption > optionsViewportEnd) {
+                                                  } else if (newSelectedCountryOption < optionsViewportStart || newSelectedCountryOption > optionsViewportEnd) {
                                                     Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
                                                             viewport.scrollTo({
                                                                   top: (newSelectedCountryOption - 13 | 0) * countryOptionHeight,
@@ -393,7 +394,7 @@ function CountrySelect(props) {
                                                                         });
                                                                   }), 10);
                                                           }));
-                                                  } else if (newSelectedCountryOption$1 < optionsViewportStart) {
+                                                  } else if (newSelectedCountryOption$1 < optionsViewportStart || newSelectedCountryOption$1 > optionsViewportEnd) {
                                                     Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
                                                             viewport.scrollTo({
                                                                   top: newSelectedCountryOption$1 * countryOptionHeight,

@@ -76,14 +76,18 @@ let reducer = (state, action) => {
     Loaded({...loadedState, optionsViewportStart, optionsViewportEnd})
 
   | (SetIsDropdownOpen(isDropdownOpen), Loaded(loadedState)) =>
-    Loaded({
-      ...loadedState,
-      isDropdownOpen,
-      searchInput: "",
-      optionsViewportStart: 0,
-      optionsViewportEnd: maxVisibleCountryOptions - 1,
-      selectedCountryOption: 0,
-    })
+    if loadedState.isDropdownOpen == isDropdownOpen {
+      Loaded(loadedState)
+    } else {
+      Loaded({
+        ...loadedState,
+        isDropdownOpen,
+        searchInput: "",
+        optionsViewportStart: 0,
+        optionsViewportEnd: maxVisibleCountryOptions - 1,
+        selectedCountryOption: 0,
+      })
+    }
 
   | (SetCountryOptionHeight(countryOptionHeight), Loaded(loadedState)) =>
     Loaded({...loadedState, countryOptionHeight})
@@ -246,7 +250,6 @@ let make = (
         )
       })
 
-      // TODO: when the user finishes scrolling, it should focus on the search input, without reseting other state
       searchInputRef.current->Nullable.toOption->Option.forEach(Extensions.Dom.focus)
     }
 
@@ -324,7 +327,10 @@ let make = (
                       )
                     }, 10)->ignore
                   })
-                } else if newSelectedCountryOption < optionsViewportStart {
+                } else if (
+                  newSelectedCountryOption < optionsViewportStart ||
+                    newSelectedCountryOption > optionsViewportEnd
+                ) {
                   viewportRef.current
                   ->Nullable.toOption
                   ->Option.forEach(viewport =>
@@ -357,7 +363,10 @@ let make = (
                   ->Option.forEach(viewport =>
                     Extensions.Dom.scrollTo(viewport, {"top": 0.0, "behavior": "instant"})
                   )
-                } else if newSelectedCountryOption > optionsViewportEnd {
+                } else if (
+                  newSelectedCountryOption < optionsViewportStart ||
+                    newSelectedCountryOption > optionsViewportEnd
+                ) {
                   viewportRef.current
                   ->Nullable.toOption
                   ->Option.forEach(viewport => {
