@@ -410,6 +410,13 @@ let make = (
           <div
             ref={ReactDOM.Ref.domRef(viewportRef)}
             className={css["dropdown"]}
+            style={ReactDOM.Style.make(
+              ~height=(Math.Int.min(
+                countryOptionsWithIndex->Array.length,
+                maxVisibleCountryOptions,
+              )->Int.toFloat *. countryOptionHeight +. 5.0)->Float.toString ++ "px",
+              (),
+            )}
             onScroll={_ => onScroll()}
             tabIndex={-1}>
             <div

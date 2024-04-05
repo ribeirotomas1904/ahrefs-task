@@ -496,6 +496,9 @@ function CountrySelect(props) {
                                           }),
                                       ref: Caml_option.some(viewportRef),
                                       className: css.dropdown,
+                                      style: {
+                                        height: (Math.min(countryOptionsWithIndex$1.length, 14) * countryOptionHeight + 5.0).toString() + "px"
+                                      },
                                       tabIndex: -1,
                                       onScroll: (function (param) {
                                           onScroll();
