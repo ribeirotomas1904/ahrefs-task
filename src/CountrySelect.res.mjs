@@ -140,6 +140,9 @@ function reducer(state, action) {
 }
 
 function CountrySelect$CountryOption(props) {
+  var onCancelSelect = props.onCancelSelect;
+  var onMouseEnter = props.onMouseEnter;
+  var onChange = props.onChange;
   return JsxRuntime.jsxs("div", {
               children: [
                 JsxRuntime.jsx("span", {
@@ -156,8 +159,24 @@ function CountrySelect$CountryOption(props) {
               style: {
                 top: props.top
               },
-              onClick: props.onClick,
-              onMouseEnter: props.onMouseEnter
+              onClick: (function (param) {
+                  onChange();
+                }),
+              onMouseEnter: (function (param) {
+                  onMouseEnter();
+                }),
+              onTouchCancel: (function (param) {
+                  onCancelSelect();
+                }),
+              onTouchEnd: (function (param) {
+                  onChange();
+                }),
+              onTouchMove: (function (param) {
+                  onCancelSelect();
+                }),
+              onTouchStart: (function (param) {
+                  onMouseEnter();
+                })
             });
 }
 
@@ -262,13 +281,13 @@ function CountrySelect(props) {
     var onChangeHandler = function () {
       Core__Option.forEach(countryOptionsWithIndex$1[selectedCountryOption], (function (param) {
               onChange(param[0].value);
-            }));
-      dispatch({
-            TAG: "SetIsDropdownOpen",
-            _0: false
-          });
-      Core__Option.forEach(Caml_option.nullable_to_opt(searchInputRef.current), (function (prim) {
-              prim.blur();
+              dispatch({
+                    TAG: "SetIsDropdownOpen",
+                    _0: false
+                  });
+              Core__Option.forEach(Caml_option.nullable_to_opt(searchInputRef.current), (function (prim) {
+                      prim.blur();
+                    }));
             }));
     };
     var onScroll = function () {
@@ -444,13 +463,17 @@ function CountrySelect(props) {
                                               return JsxRuntime.jsx(CountrySelect$CountryOption, {
                                                           label: countryOption.label,
                                                           value: countryOption.value,
-                                                          onClick: (function (param) {
-                                                              onChangeHandler();
-                                                            }),
-                                                          onMouseEnter: (function (param) {
+                                                          onChange: onChangeHandler,
+                                                          onMouseEnter: (function () {
                                                               dispatch({
                                                                     TAG: "SetSelectedCountryOption",
                                                                     _0: countryOptionIndex
+                                                                  });
+                                                            }),
+                                                          onCancelSelect: (function () {
+                                                              dispatch({
+                                                                    TAG: "SetSelectedCountryOption",
+                                                                    _0: -1
                                                                   });
                                                             }),
                                                           onRef: (function (domRef) {

@@ -109,12 +109,25 @@ let initialState = Initial
 
 module CountryOption = {
   @react.component
-  let make = (~label, ~value, ~onClick, ~onMouseEnter, ~onRef, ~top, ~isSelected) => {
+  let make = (
+    ~label,
+    ~value,
+    ~onChange,
+    ~onMouseEnter,
+    ~onCancelSelect,
+    ~onRef,
+    ~top,
+    ~isSelected,
+  ) => {
     <div
       className={css["country-option"] ++ " " ++ (isSelected ? css["country-option-selected"] : "")}
       style={ReactDOM.Style.make(~top, ())}
-      onClick
-      onMouseEnter
+      onClick={_ => onChange()}
+      onTouchEnd={_ => onChange()}
+      onMouseEnter={_ => onMouseEnter()}
+      onTouchStart={_ => onMouseEnter()}
+      onTouchMove={_ => onCancelSelect()}
+      onTouchCancel={_ => onCancelSelect()}
       ref={ReactDOM.Ref.callbackDomRef(onRef)}>
       <span className={`fi fi-${value}`} />
       <span> {React.string(label)} </span>
@@ -204,13 +217,15 @@ let make = (
       countryOptionsWithIndex->Array.mapWithIndex((countryOption, index) => (countryOption, index))
 
     let onChangeHandler = () => {
-      countryOptionsWithIndex[selectedCountryOption]->Option.forEach(((countryOption, _)) =>
+      countryOptionsWithIndex[selectedCountryOption]->Option.forEach(((countryOption, _)) => {
         onChange(Some(countryOption.value))
-      )
-      dispatch(SetIsDropdownOpen(false))
-      searchInputRef.current
-      ->Nullable.toOption
-      ->Option.forEach(Extensions.Dom.blur)
+
+        dispatch(SetIsDropdownOpen(false))
+
+        searchInputRef.current
+        ->Nullable.toOption
+        ->Option.forEach(Extensions.Dom.blur)
+      })
     }
 
     let onScroll = () => {
@@ -407,7 +422,8 @@ let make = (
                     key={countryOption.value}
                     label={countryOption.label}
                     value={countryOption.value}
-                    onClick={_ => onChangeHandler()}
+                    onChange={onChangeHandler}
+                    onCancelSelect={_ => dispatch(SetSelectedCountryOption(-1))}
                     onMouseEnter={_ => dispatch(SetSelectedCountryOption(countryOptionIndex))}
                     onRef={domRef => {
                       domRef
