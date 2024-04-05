@@ -197,8 +197,8 @@ let make = (
   })
 
   switch state {
-  | Initial => React.string("initial")
-  | Loading => React.string("loading")
+  | Initial => React.string("TODO")
+  | Loading => React.string("TODO")
   | Loaded({
       countryOptions,
       searchInput,
@@ -233,7 +233,6 @@ let make = (
     }
 
     let onScroll = () => {
-      Console.log("ON SCROLL")
       viewportRef.current
       ->Nullable.toOption
       ->Option.forEach(viewport => {
@@ -272,7 +271,7 @@ let make = (
         })
         ->Option.getOr({
           <>
-            <span> {React.string("Select Country")} </span>
+            <span> {React.string("Select country")} </span>
             <TriangleIcon />
           </>
         })}
@@ -354,9 +353,6 @@ let make = (
                     ? 0
                     : selectedCountryOption + 1
 
-                Console.log(newSelectedCountryOption)
-                Console.log(optionsViewportEnd)
-
                 if newSelectedCountryOption == 0 {
                   viewportRef.current
                   ->Nullable.toOption
@@ -403,57 +399,57 @@ let make = (
           />
         </div>
         // DROPDOWN
-        {isDropdownOpen
-          ? <div
-              ref={ReactDOM.Ref.domRef(viewportRef)}
-              className={css["dropdown"]}
+        {switch (isDropdownOpen, countryOptionsWithIndex->Array.length > 0) {
+        | (false, _) => React.null
+        | (true, false) =>
+          <div className={css["dropdown"]} tabIndex={-1}>
+            <div className={css["no-options"]}> {React.string("No options")} </div>
+          </div>
+
+        | (true, true) =>
+          <div
+            ref={ReactDOM.Ref.domRef(viewportRef)}
+            className={css["dropdown"]}
+            onScroll={_ => onScroll()}
+            tabIndex={-1}>
+            <div
+              className={css["country-options-container"]}
               style={ReactDOM.Style.make(
-                ~height=(Math.Int.min(
-                  countryOptionsWithIndex->Array.length,
-                  maxVisibleCountryOptions,
-                )->Int.toFloat *. countryOptionHeight +. 5.0)->Float.toString ++ "px",
+                ~height=(countryOptionsWithIndex->Array.length->Int.toFloat *. countryOptionHeight)
+                  ->Float.toString ++ "px",
                 (),
-              )}
-              onScroll={_ => onScroll()}
-              tabIndex={-1}>
-              <div
-                className={css["country-options-container"]}
-                style={ReactDOM.Style.make(
-                  ~height=(countryOptionsWithIndex->Array.length->Int.toFloat *.
-                    countryOptionHeight)->Float.toString ++ "px",
-                  (),
-                )}>
-                {countryOptionsWithIndex
-                ->Array.slice(~start=optionsViewportStart, ~end=optionsViewportEnd + 1)
-                ->Array.map(((countryOption, countryOptionIndex)) => {
-                  <CountryOption
-                    isSelected={countryOptionIndex == selectedCountryOption}
-                    key={countryOption.value}
-                    label={countryOption.label}
-                    value={countryOption.value}
-                    onChange={onChangeHandler}
-                    onCancelSelect={_ => dispatch(SetSelectedCountryOption(-1))}
-                    onMouseEnter={_ => dispatch(SetSelectedCountryOption(countryOptionIndex))}
-                    onRef={domRef => {
-                      domRef
-                      ->Nullable.toOption
-                      ->Option.forEach(domRef => {
-                        if Extensions.Dom.offsetHeight(domRef) != countryOptionHeight {
-                          dispatch(SetCountryOptionHeight(Extensions.Dom.offsetHeight(domRef)))
-                        }
-                      })
-                    }}
-                    top={Float.toString(
-                      countryOptionIndex->Int.toFloat *. countryOptionHeight,
-                    ) ++ "px"}
-                  />
-                })
-                ->React.array}
-              </div>
+              )}>
+              {countryOptionsWithIndex
+              ->Array.slice(~start=optionsViewportStart, ~end=optionsViewportEnd + 1)
+              ->Array.map(((countryOption, countryOptionIndex)) => {
+                <CountryOption
+                  isSelected={countryOptionIndex == selectedCountryOption}
+                  key={countryOption.value}
+                  label={countryOption.label}
+                  value={countryOption.value}
+                  onChange={onChangeHandler}
+                  onCancelSelect={_ => dispatch(SetSelectedCountryOption(-1))}
+                  onMouseEnter={_ => dispatch(SetSelectedCountryOption(countryOptionIndex))}
+                  onRef={domRef => {
+                    domRef
+                    ->Nullable.toOption
+                    ->Option.forEach(domRef => {
+                      if Extensions.Dom.offsetHeight(domRef) != countryOptionHeight {
+                        dispatch(SetCountryOptionHeight(Extensions.Dom.offsetHeight(domRef)))
+                      }
+                    })
+                  }}
+                  top={Float.toString(
+                    countryOptionIndex->Int.toFloat *. countryOptionHeight,
+                  ) ++ "px"}
+                />
+              })
+              ->React.array}
             </div>
-          : React.null}
+          </div>
+        }}
       </div>
     </div>
-  | Error => React.string("error")
+  | Error => React.string("TODO")
   }
 }

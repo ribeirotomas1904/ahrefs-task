@@ -256,11 +256,9 @@ function CountrySelect(props) {
   if (typeof state !== "object") {
     switch (state) {
       case "Initial" :
-          return "initial";
       case "Loading" :
-          return "loading";
       case "Error" :
-          return "error";
+          return "TODO";
       
     }
   } else {
@@ -292,7 +290,6 @@ function CountrySelect(props) {
             }));
     };
     var onScroll = function () {
-      console.log("ON SCROLL");
       Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
               var optionsViewportStart = Math.round(viewport.scrollTop / countryOptionHeight) | 0;
               dispatch({
@@ -305,6 +302,7 @@ function CountrySelect(props) {
               prim.focus();
             }));
     };
+    var match$1 = countryOptionsWithIndex$1.length > 0;
     return JsxRuntime.jsxs("div", {
                 children: [
                   JsxRuntime.jsx("div", {
@@ -327,7 +325,7 @@ function CountrySelect(props) {
                                   })), JsxRuntime.jsxs(JsxRuntime.Fragment, {
                                   children: [
                                     JsxRuntime.jsx("span", {
-                                          children: "Select Country"
+                                          children: "Select country"
                                         }),
                                     JsxRuntime.jsx(CountrySelect$TriangleIcon, {})
                                   ]
@@ -357,8 +355,6 @@ function CountrySelect(props) {
                                               case "ArrowDown" :
                                                   e.preventDefault();
                                                   var newSelectedCountryOption = (selectedCountryOption + 1 | 0) > (countryOptionsWithIndex$1.length - 1 | 0) ? 0 : selectedCountryOption + 1 | 0;
-                                                  console.log(newSelectedCountryOption);
-                                                  console.log(optionsViewportEnd);
                                                   if (newSelectedCountryOption === 0) {
                                                     Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
                                                             viewport.scrollTo({
@@ -456,57 +452,63 @@ function CountrySelect(props) {
                                 ],
                                 className: css["search-input-container"]
                               }),
-                          state.isDropdownOpen ? JsxRuntime.jsx("div", {
-                                  children: JsxRuntime.jsx("div", {
-                                        children: countryOptionsWithIndex$1.slice(optionsViewportStart, optionsViewportEnd + 1 | 0).map(function (param) {
-                                              var countryOptionIndex = param[1];
-                                              var countryOption = param[0];
-                                              return JsxRuntime.jsx(CountrySelect$CountryOption, {
-                                                          label: countryOption.label,
-                                                          value: countryOption.value,
-                                                          onChange: onChangeHandler,
-                                                          onMouseEnter: (function () {
-                                                              dispatch({
-                                                                    TAG: "SetSelectedCountryOption",
-                                                                    _0: countryOptionIndex
-                                                                  });
-                                                            }),
-                                                          onCancelSelect: (function () {
-                                                              dispatch({
-                                                                    TAG: "SetSelectedCountryOption",
-                                                                    _0: -1
-                                                                  });
-                                                            }),
-                                                          onRef: (function (domRef) {
-                                                              Core__Option.forEach((domRef == null) ? undefined : Caml_option.some(domRef), (function (domRef) {
-                                                                      if (domRef.offsetHeight !== countryOptionHeight) {
-                                                                        return dispatch({
-                                                                                    TAG: "SetCountryOptionHeight",
-                                                                                    _0: domRef.offsetHeight
-                                                                                  });
-                                                                      }
-                                                                      
-                                                                    }));
-                                                            }),
-                                                          top: (countryOptionIndex * countryOptionHeight).toString() + "px",
-                                                          isSelected: countryOptionIndex === selectedCountryOption
-                                                        }, countryOption.value);
-                                            }),
-                                        className: css["country-options-container"],
-                                        style: {
-                                          height: (countryOptionsWithIndex$1.length * countryOptionHeight).toString() + "px"
-                                        }
-                                      }),
-                                  ref: Caml_option.some(viewportRef),
-                                  className: css.dropdown,
-                                  style: {
-                                    height: (Math.min(countryOptionsWithIndex$1.length, 14) * countryOptionHeight + 5.0).toString() + "px"
-                                  },
-                                  tabIndex: -1,
-                                  onScroll: (function (param) {
-                                      onScroll();
+                          state.isDropdownOpen ? (
+                              match$1 ? JsxRuntime.jsx("div", {
+                                      children: JsxRuntime.jsx("div", {
+                                            children: countryOptionsWithIndex$1.slice(optionsViewportStart, optionsViewportEnd + 1 | 0).map(function (param) {
+                                                  var countryOptionIndex = param[1];
+                                                  var countryOption = param[0];
+                                                  return JsxRuntime.jsx(CountrySelect$CountryOption, {
+                                                              label: countryOption.label,
+                                                              value: countryOption.value,
+                                                              onChange: onChangeHandler,
+                                                              onMouseEnter: (function () {
+                                                                  dispatch({
+                                                                        TAG: "SetSelectedCountryOption",
+                                                                        _0: countryOptionIndex
+                                                                      });
+                                                                }),
+                                                              onCancelSelect: (function () {
+                                                                  dispatch({
+                                                                        TAG: "SetSelectedCountryOption",
+                                                                        _0: -1
+                                                                      });
+                                                                }),
+                                                              onRef: (function (domRef) {
+                                                                  Core__Option.forEach((domRef == null) ? undefined : Caml_option.some(domRef), (function (domRef) {
+                                                                          if (domRef.offsetHeight !== countryOptionHeight) {
+                                                                            return dispatch({
+                                                                                        TAG: "SetCountryOptionHeight",
+                                                                                        _0: domRef.offsetHeight
+                                                                                      });
+                                                                          }
+                                                                          
+                                                                        }));
+                                                                }),
+                                                              top: (countryOptionIndex * countryOptionHeight).toString() + "px",
+                                                              isSelected: countryOptionIndex === selectedCountryOption
+                                                            }, countryOption.value);
+                                                }),
+                                            className: css["country-options-container"],
+                                            style: {
+                                              height: (countryOptionsWithIndex$1.length * countryOptionHeight).toString() + "px"
+                                            }
+                                          }),
+                                      ref: Caml_option.some(viewportRef),
+                                      className: css.dropdown,
+                                      tabIndex: -1,
+                                      onScroll: (function (param) {
+                                          onScroll();
+                                        })
+                                    }) : JsxRuntime.jsx("div", {
+                                      children: JsxRuntime.jsx("div", {
+                                            children: "No options",
+                                            className: css["no-options"]
+                                          }),
+                                      className: css.dropdown,
+                                      tabIndex: -1
                                     })
-                                }) : null
+                            ) : null
                         ],
                         className: css.wrapper
                       })
