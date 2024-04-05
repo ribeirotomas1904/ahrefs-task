@@ -12,4 +12,6 @@ module Array = {
 
 module Dom = {
   @get external scrollTop: Dom.element => int = "scrollTop"
+  @send external focus: Dom.element => unit = "focus"
+  @get external offsetHeight: Dom.element => float = "offsetHeight"
 }

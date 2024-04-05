@@ -53,7 +53,9 @@ function reducer(state, action) {
                   countryOptions: action._0,
                   searchInput: "",
                   optionsViewportStart: 0,
-                  optionsViewportEnd: 19
+                  optionsViewportEnd: 19,
+                  isDropdownOpen: false,
+                  countryOptionHeight: 0.0
                 };
         } else {
           return state;
@@ -67,7 +69,9 @@ function reducer(state, action) {
                   countryOptions: state.countryOptions,
                   searchInput: action._0,
                   optionsViewportStart: state.optionsViewportStart,
-                  optionsViewportEnd: state.optionsViewportEnd
+                  optionsViewportEnd: state.optionsViewportEnd,
+                  isDropdownOpen: state.isDropdownOpen,
+                  countryOptionHeight: state.countryOptionHeight
                 };
         }
     case "SetOptionsViewport" :
@@ -79,7 +83,37 @@ function reducer(state, action) {
                   countryOptions: state.countryOptions,
                   searchInput: state.searchInput,
                   optionsViewportStart: action.optionsViewportStart,
-                  optionsViewportEnd: action.optionsViewportEnd
+                  optionsViewportEnd: action.optionsViewportEnd,
+                  isDropdownOpen: state.isDropdownOpen,
+                  countryOptionHeight: state.countryOptionHeight
+                };
+        }
+    case "SetIsDropdownOpen" :
+        if (typeof state !== "object") {
+          return state;
+        } else {
+          return {
+                  TAG: "Loaded",
+                  countryOptions: state.countryOptions,
+                  searchInput: state.searchInput,
+                  optionsViewportStart: 0,
+                  optionsViewportEnd: 19,
+                  isDropdownOpen: action._0,
+                  countryOptionHeight: state.countryOptionHeight
+                };
+        }
+    case "SetCountryOptionHeight" :
+        if (typeof state !== "object") {
+          return state;
+        } else {
+          return {
+                  TAG: "Loaded",
+                  countryOptions: state.countryOptions,
+                  searchInput: state.searchInput,
+                  optionsViewportStart: state.optionsViewportStart,
+                  optionsViewportEnd: state.optionsViewportEnd,
+                  isDropdownOpen: state.isDropdownOpen,
+                  countryOptionHeight: action._0
                 };
         }
     
@@ -87,21 +121,22 @@ function reducer(state, action) {
 }
 
 function CountrySelect$CountryOption(props) {
-  var label = props.label;
-  console.log(label);
   return JsxRuntime.jsxs("div", {
               children: [
                 JsxRuntime.jsx("span", {
                       className: "fi fi-" + props.value
                     }),
-                label
+                props.label
               ],
+              ref: Caml_option.some(props.onRef),
               className: css["country-option"],
               style: {
                 position: "absolute",
                 top: props.top,
                 width: "100%"
               },
+              tabIndex: 0,
+              onKeyUp: props.onKeyUp,
               onClick: props.onClick
             });
 }
@@ -112,17 +147,19 @@ var CountryOption = {
 
 function CountrySelect(props) {
   var onChange = props.onChange;
+  var __className = props.className;
+  var className = __className !== undefined ? __className : "";
   var match = React.useReducer(reducer, "Initial");
   var dispatch = match[1];
   var state = match[0];
   var viewportRef = React.useRef(null);
+  var countryOptionsRef = React.useRef({});
   React.useEffect((function () {
           var controller = new AbortController();
           dispatch("StartLoading");
           Fetch.get("https://gist.githubusercontent.com/rusty-key/659db3f4566df459bd59c8a53dc9f71f/raw/4127f9550ef063121c564025f6d27dceeb279623/counties.json", Caml_option.some(controller.signal)).then(function (prim) {
                   return prim.json();
                 }).then(function (json) {
-                console.log(json);
                 var countries = parseCountries(json);
                 if (countries !== undefined) {
                   return dispatch({
@@ -137,16 +174,6 @@ function CountrySelect(props) {
                     controller.abort();
                   });
         }), []);
-  var onScroll = function (param) {
-    Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
-            var optionsViewportStart = viewport.scrollTop / 27 | 0;
-            dispatch({
-                  TAG: "SetOptionsViewport",
-                  optionsViewportStart: optionsViewportStart,
-                  optionsViewportEnd: (optionsViewportStart + 20 | 0) - 1 | 0
-                });
-          }));
-  };
   if (typeof state !== "object") {
     switch (state) {
       case "Initial" :
@@ -158,6 +185,7 @@ function CountrySelect(props) {
       
     }
   } else {
+    var countryOptionHeight = state.countryOptionHeight;
     var optionsViewportStart = state.optionsViewportStart;
     var searchInput = state.searchInput;
     var countryOptions = state.countryOptions;
@@ -185,6 +213,12 @@ function CountrySelect(props) {
                       }),
                   JsxRuntime.jsx("input", {
                         value: searchInput,
+                        onFocus: (function (param) {
+                            dispatch({
+                                  TAG: "SetIsDropdownOpen",
+                                  _0: true
+                                });
+                          }),
                         onChange: (function (e) {
                             dispatch({
                                   TAG: "SetSearchInput",
@@ -192,41 +226,92 @@ function CountrySelect(props) {
                                 });
                           })
                       }),
-                  JsxRuntime.jsx("div", {
-                        children: JsxRuntime.jsx("div", {
-                              children: countryOptionsFiltered.slice(Core__Int.clamp(0, undefined, optionsViewportStart - 10 | 0), (state.optionsViewportEnd + 1 | 0) + 10 | 0).map(function (countryOption, index) {
-                                    return JsxRuntime.jsx(CountrySelect$CountryOption, {
-                                                label: countryOption.label,
-                                                value: countryOption.value,
-                                                onClick: (function (param) {
-                                                    onChange(countryOption.value);
-                                                  }),
-                                                top: Math.imul(optionsViewportStart + index | 0, 27).toString() + "px"
-                                              }, countryOption.value);
-                                  }),
-                              style: {
-                                height: Math.imul(countryOptionsFiltered.length, 27).toString() + "px",
-                                position: "absolute",
-                                width: "100%"
-                              }
-                            }),
-                        ref: Caml_option.some(viewportRef),
-                        className: css.dropdown,
-                        style: {
-                          height: Math.imul(Math.min(countryOptionsFiltered.length, 20), 27).toString() + "px"
-                        },
-                        onScroll: onScroll
-                      })
-                ]
+                  state.isDropdownOpen ? JsxRuntime.jsx("div", {
+                          children: JsxRuntime.jsx("div", {
+                                children: countryOptionsFiltered.slice(Core__Int.clamp(0, undefined, optionsViewportStart - 10 | 0), (state.optionsViewportEnd + 1 | 0) + 10 | 0).map(function (countryOption, index) {
+                                      return JsxRuntime.jsx(CountrySelect$CountryOption, {
+                                                  label: countryOption.label,
+                                                  value: countryOption.value,
+                                                  onClick: (function (param) {
+                                                      onChange(countryOption.value);
+                                                      dispatch({
+                                                            TAG: "SetIsDropdownOpen",
+                                                            _0: false
+                                                          });
+                                                    }),
+                                                  onKeyUp: (function (e) {
+                                                      e.preventDefault();
+                                                      var match = e.code;
+                                                      switch (match) {
+                                                        case "ArrowDown" :
+                                                            return Core__Option.forEach(countryOptionsRef.current[(index + 1 | 0).toString()], (function (prim) {
+                                                                          prim.focus();
+                                                                        }));
+                                                        case "ArrowUp" :
+                                                            return Core__Option.forEach(countryOptionsRef.current[(index - 1 | 0).toString()], (function (prim) {
+                                                                          prim.focus();
+                                                                        }));
+                                                        case "Enter" :
+                                                            onChange(countryOption.value);
+                                                            return dispatch({
+                                                                        TAG: "SetIsDropdownOpen",
+                                                                        _0: false
+                                                                      });
+                                                        case "Escape" :
+                                                            return dispatch({
+                                                                        TAG: "SetIsDropdownOpen",
+                                                                        _0: false
+                                                                      });
+                                                        default:
+                                                          return ;
+                                                      }
+                                                    }),
+                                                  onRef: (function (domRef) {
+                                                      Core__Option.forEach((domRef == null) ? undefined : Caml_option.some(domRef), (function (domRef) {
+                                                              countryOptionsRef.current[index.toString()] = domRef;
+                                                              if (domRef.offsetHeight !== countryOptionHeight) {
+                                                                return dispatch({
+                                                                            TAG: "SetCountryOptionHeight",
+                                                                            _0: domRef.offsetHeight
+                                                                          });
+                                                              }
+                                                              
+                                                            }));
+                                                    }),
+                                                  top: ((optionsViewportStart + index | 0) * countryOptionHeight).toString() + "px"
+                                                }, countryOption.value);
+                                    }),
+                                style: {
+                                  height: (countryOptionsFiltered.length * countryOptionHeight).toString() + "px",
+                                  position: "absolute",
+                                  width: "100%"
+                                }
+                              }),
+                          ref: Caml_option.some(viewportRef),
+                          className: css.dropdown,
+                          style: {
+                            height: (Math.min(countryOptionsFiltered.length, 20) * countryOptionHeight).toString() + "px"
+                          },
+                          onScroll: (function (param) {
+                              Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
+                                      var optionsViewportStart = Math.trunc(viewport.scrollTop / countryOptionHeight) | 0;
+                                      dispatch({
+                                            TAG: "SetOptionsViewport",
+                                            optionsViewportStart: optionsViewportStart,
+                                            optionsViewportEnd: (optionsViewportStart + 20 | 0) - 1 | 0
+                                          });
+                                    }));
+                            })
+                        }) : null
+                ],
+                className: className
               });
   }
 }
 
 var maxVisibleCountryOptions = 20;
 
-var renderOutOfViewport = 10;
-
-var countryOptionHeight = 27;
+var countryOptionsOutsideViewport = 10;
 
 var initialState = "Initial";
 
@@ -235,8 +320,7 @@ var make = CountrySelect;
 export {
   css ,
   maxVisibleCountryOptions ,
-  renderOutOfViewport ,
-  countryOptionHeight ,
+  countryOptionsOutsideViewport ,
   parseCountries ,
   reducer ,
   initialState ,

@@ -17,7 +17,7 @@ function App(props) {
                         setCountry(function (param) {
                               return country;
                             });
-                        console.log(country);
+                        console.log("[App.res] Selected country:", country);
                       })
                   }),
               style: {

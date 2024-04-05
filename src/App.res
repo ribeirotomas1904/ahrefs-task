@@ -8,7 +8,7 @@ let make = () => {
       country
       onChange={country => {
         setCountry(_ => country)
-        Js.log(country)
+        Console.log2("[App.res] Selected country:", country)
       }}
     />
   </div>
