@@ -40,6 +40,7 @@ type state =
       optionsViewportEnd: int,
       isDropdownOpen: bool,
       countryOptionHeight: float,
+      selectedCountryOption: int,
     })
   | Error
 
@@ -51,6 +52,7 @@ type action =
   | SetOptionsViewport({optionsViewportStart: int, optionsViewportEnd: int})
   | SetIsDropdownOpen(bool)
   | SetCountryOptionHeight(float)
+  | SetSelectedCountryOption(int)
 
 let reducer = (state, action) => {
   switch (action, state) {
@@ -64,6 +66,7 @@ let reducer = (state, action) => {
       optionsViewportEnd: maxVisibleCountryOptions - 1,
       isDropdownOpen: false,
       countryOptionHeight: 0.0,
+      selectedCountryOption: 0,
     })
 
   | (Error, Loading) => Error
@@ -74,13 +77,16 @@ let reducer = (state, action) => {
     Loaded({...loadedState, optionsViewportStart, optionsViewportEnd})
 
   | (SetIsDropdownOpen(isDropdownOpen), Loaded(loadedState)) =>
-    Loaded({...loadedState, isDropdownOpen, optionsViewportStart: 0, optionsViewportEnd: maxVisibleCountryOptions - 1})
+    Loaded({...loadedState, isDropdownOpen, searchInput: "", optionsViewportStart: 0, optionsViewportEnd: maxVisibleCountryOptions - 1, selectedCountryOption: 0})
 
   | (SetCountryOptionHeight(countryOptionHeight), Loaded(loadedState)) =>
     Loaded({...loadedState, countryOptionHeight})
 
+  | (SetSelectedCountryOption(selectedCountryOption), Loaded(loadedState)) =>
+    Loaded({...loadedState, selectedCountryOption})
+
   | (
-      StartLoading | Load(_) | Error | SetSearchInput(_) | SetOptionsViewport(_) | SetIsDropdownOpen(_) | SetCountryOptionHeight(_),
+      StartLoading | Load(_) | Error | SetSearchInput(_) | SetOptionsViewport(_) | SetIsDropdownOpen(_) | SetCountryOptionHeight(_) | SetSelectedCountryOption(_),
       Initial | Loading | Loaded(_) | Error,
     ) => state
   }
@@ -90,13 +96,12 @@ let initialState = Initial
 
 module CountryOption = {
   @react.component
-  let make = (~label, ~value, ~onClick, ~onKeyUp, ~onRef, ~top) => {
+  let make = (~label, ~value, ~onClick, ~onMouseEnter, ~onRef, ~top, ~isSelected) => {
     <div
-      tabIndex=0
-      className={css["country-option"]}
+      className={css["country-option"] ++ " " ++ (isSelected ? css["country-option-selected"] : "")}
       style={ReactDOM.Style.make(~top, ~position="absolute", ~width="100%", ())}
       onClick
-      onKeyUp
+      onMouseEnter
       ref={ReactDOM.Ref.callbackDomRef(onRef)}
       >
       <span className={`fi fi-${value}`} />
@@ -113,6 +118,7 @@ let make = (
 ) => {
   let (state, dispatch) = React.useReducer(reducer, initialState)
 
+  let searchInputRef = React.useRef(null)
   let viewportRef = React.useRef(null)
   let countryOptionsRef = React.useRef(Dict.make())
 
@@ -139,31 +145,45 @@ let make = (
     Some(() => AbortController.abort(controller))
   })
 
-  let onScroll = countryOptionHeight => {
-    viewportRef.current
-    ->Nullable.toOption
-    ->Option.forEach(viewport => {
-      let optionsViewportStart = Math.trunc(viewport->Extensions.Dom.scrollTop->Int.toFloat /. countryOptionHeight)->Int.fromFloat
-
-      dispatch(
-        SetOptionsViewport({
-          optionsViewportStart,
-          optionsViewportEnd: optionsViewportStart + maxVisibleCountryOptions - 1,
-        }),
-      )
-    })
-  }
-
   switch state {
   | Initial => React.string("initial")
   | Loading => React.string("loading")
-  | Loaded({countryOptions, searchInput, optionsViewportStart, optionsViewportEnd, isDropdownOpen, countryOptionHeight}) =>
-    let countryOptionsFiltered = {
+  | Loaded({countryOptions, searchInput, optionsViewportStart, optionsViewportEnd, isDropdownOpen, countryOptionHeight, selectedCountryOption}) =>
+    // TODO: deal with the case of countryOptionsFiltered having length 0
+    let countryOptionsWithIndex = {
       countryOptions->Array.filter(countryOption =>
         countryOption.label
         ->String.toLowerCase
         ->String.includes(searchInput->String.trim->String.toLowerCase)
       )
+    }
+
+    let countryOptionsWithIndex = countryOptionsWithIndex->Array.mapWithIndex((countryOption, index) => (countryOption, index))
+
+    let onChangeHandler = () => {
+      Array.get(countryOptionsWithIndex, selectedCountryOption)->Option.forEach(((countryOption, _)) => onChange(Some(countryOption.value)))
+      dispatch(SetIsDropdownOpen(false))
+      searchInputRef.current
+      ->Nullable.toOption
+      ->Option.forEach(Extensions.Dom.blur)
+    }
+
+    let onScroll = () => {
+      Console.log("ON SCROLL")
+      viewportRef.current
+      ->Nullable.toOption
+      ->Option.forEach(viewport => {
+        let optionsViewportStart = Math.trunc(viewport->Extensions.Dom.scrollTop->Int.toFloat /. countryOptionHeight)->Int.fromFloat
+
+        dispatch(
+          SetOptionsViewport({
+            optionsViewportStart,
+            optionsViewportEnd: optionsViewportStart + (maxVisibleCountryOptions - 1),
+          }),
+        )
+      })
+
+      searchInputRef.current->Nullable.toOption->Option.forEach(Extensions.Dom.focus)
     }
 
     <div className>
@@ -184,12 +204,58 @@ let make = (
       </div>
       // SEARCH INPUT
       <input
+        ref={ReactDOM.Ref.domRef(searchInputRef)}
         value=searchInput
         onChange={e => dispatch(SetSearchInput(ReactEvent.Form.target(e)["value"]))}
         onFocus=(_ => dispatch(SetIsDropdownOpen(true)))
+        onKeyDown={e => {
+          switch ReactEvent.Keyboard.code(e) {
+          | "Enter" => 
+              onChangeHandler()
+          | "Escape" =>
+              dispatch(SetIsDropdownOpen(false))
+              searchInputRef.current
+              ->Nullable.toOption
+              ->Option.forEach(Extensions.Dom.blur)
+          | "ArrowUp" =>
+              ReactEvent.Keyboard.preventDefault(e)
 
-        // TODO: onBlur cancels the click on a country option
-        // onBlur=(_ => dispatch(SetIsDropdownOpen(false)))
+              let newSelectedCountryOption = (selectedCountryOption - 1) < 0 ? countryOptionsWithIndex->Array.length - 1 : selectedCountryOption - 1
+              dispatch(SetSelectedCountryOption(newSelectedCountryOption))
+
+              if (newSelectedCountryOption == countryOptionsWithIndex->Array.length - 1) {
+                viewportRef.current->Nullable.toOption->Option.forEach(viewport => Extensions.Dom.scrollTo(viewport, {"top": countryOptionsWithIndex->Array.length->Int.toFloat *. countryOptionHeight}))
+              } else if (newSelectedCountryOption < optionsViewportStart) {
+                viewportRef.current->Nullable.toOption->Option.forEach(viewport => Extensions.Dom.scrollTo(viewport, {"top": newSelectedCountryOption->Int.toFloat *. countryOptionHeight}))
+              }
+          | "ArrowDown" =>
+              ReactEvent.Keyboard.preventDefault(e)
+
+              let newSelectedCountryOption = (selectedCountryOption + 1) > (countryOptionsWithIndex->Array.length - 1) ? 0 : selectedCountryOption + 1
+              dispatch(SetSelectedCountryOption(newSelectedCountryOption))
+
+              if (newSelectedCountryOption == 0) {
+                viewportRef.current->Nullable.toOption->Option.forEach(viewport => Extensions.Dom.scrollTo(viewport, {"top": 0.0}))
+              } else if (newSelectedCountryOption > optionsViewportEnd) {
+                viewportRef.current->Nullable.toOption->Option.forEach(viewport => Extensions.Dom.scrollTo(viewport, {"top": newSelectedCountryOption->Int.toFloat *. countryOptionHeight}))
+              }
+          | _ => ()
+          } 
+        }}
+        onBlur=(e => {
+          switch ReactEvent.Focus.relatedTarget(e) {
+            | None => dispatch(SetIsDropdownOpen(false))
+            | Some(relatedTarget) => 
+              viewportRef.current
+              ->Nullable.toOption
+              ->Option.forEach(viewport => {
+                switch Extensions.Dom.contains(viewport, Obj.magic(relatedTarget)) {
+                | false => dispatch(SetIsDropdownOpen(false))
+                | true => ()
+                }
+              })
+          }
+        })
       />
       // DROPDOWN
       { isDropdownOpen ? 
@@ -197,61 +263,45 @@ let make = (
           ref={ReactDOM.Ref.domRef(viewportRef)}
           className={css["dropdown"]}
           style={ReactDOM.Style.make(
-            ~height=(Math.Int.min(countryOptionsFiltered->Array.length, maxVisibleCountryOptions)->Int.toFloat *.
+            ~height=(Math.Int.min(countryOptionsWithIndex->Array.length, maxVisibleCountryOptions)->Int.toFloat *.
             countryOptionHeight)->Float.toString ++ "px",
             (),
           )}
-          onScroll={_ => onScroll(countryOptionHeight)}>
+          onScroll={_ => onScroll()}
+          tabIndex={-1}
+          >
           <div
             style={ReactDOM.Style.make(
               ~position="absolute",
               ~width="100%",
-              ~height=(countryOptionsFiltered->Array.length->Int.toFloat *. countryOptionHeight)
+              ~height=(countryOptionsWithIndex->Array.length->Int.toFloat *. countryOptionHeight)
                 ->Float.toString ++ "px",
               (),
             )}>
-            {countryOptionsFiltered
+            {countryOptionsWithIndex
             ->Array.slice(
-              ~start=Int.clamp(optionsViewportStart - countryOptionsOutsideViewport, ~min=0),
+              ~start=Math.Int.max(optionsViewportStart - countryOptionsOutsideViewport, 0),
               ~end=optionsViewportEnd + 1 + countryOptionsOutsideViewport,
             )
-            ->Array.mapWithIndex((countryOption, index) => {
+            ->Array.mapWithIndex(((countryOption, countryOptionIndex), mapIndex) => {
               <CountryOption
+                isSelected={countryOptionIndex == selectedCountryOption}
                 key={countryOption.value}
                 label={countryOption.label}
                 value={countryOption.value}
-                onClick={_ => {
-                  onChange(countryOption.value->Some)
-                  dispatch(SetIsDropdownOpen(false))
-                }}
-                onKeyUp={e => {
-                  // TODO: make it so that navigating on keyboard doesnt feel so weird by always moving the scrollbar
-                  ReactEvent.Keyboard.preventDefault(e)
-
-                  switch ReactEvent.Keyboard.code(e) {
-                  | "Enter" => 
-                      onChange(countryOption.value->Some)
-                      dispatch(SetIsDropdownOpen(false))
-                  | "Escape" =>
-                      dispatch(SetIsDropdownOpen(false))
-                  | "ArrowUp" =>
-                      countryOptionsRef.current->Dict.get(Int.toString(index - 1))->Option.forEach(Extensions.Dom.focus)
-                  | "ArrowDown" =>
-                      countryOptionsRef.current->Dict.get(Int.toString(index + 1))->Option.forEach(Extensions.Dom.focus)
-                  | _ => ()
-                  } 
-                }}
+                onClick={_ => onChangeHandler()}
+                onMouseEnter={_ => dispatch(SetSelectedCountryOption(countryOptionIndex))}
                 onRef={domRef => {
                   domRef
                   ->Nullable.toOption
                   ->Option.forEach(domRef => {
-                    countryOptionsRef.current->Dict.set(index->Int.toString, domRef)                    
+                    countryOptionsRef.current->Dict.set(countryOptionIndex->Int.toString, domRef)                    
                     if (Extensions.Dom.offsetHeight(domRef) != countryOptionHeight) {
                       dispatch(SetCountryOptionHeight(Extensions.Dom.offsetHeight(domRef)))
                     }
                   })
                 }}
-                top={Float.toString((optionsViewportStart + index)->Int.toFloat *. countryOptionHeight) ++ "px"}
+                top={Float.toString((optionsViewportStart + mapIndex)->Int.toFloat *. countryOptionHeight) ++ "px"}
               />
             })
             ->React.array}
