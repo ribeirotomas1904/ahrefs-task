@@ -21,7 +21,7 @@ function App(props) {
                       })
                   }),
               style: {
-                padding: "100px"
+                padding: "10px"
               }
             });
 }

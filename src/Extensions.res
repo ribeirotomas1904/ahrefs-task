@@ -16,5 +16,5 @@ module Dom = {
   @send external blur: Dom.element => unit = "blur"
   @get external offsetHeight: Dom.element => float = "offsetHeight"
   @send external contains: (Dom.element, Dom.element) => bool = "contains"
-  @send external scrollTo: (Dom.element, {"top": float}) => unit = "scrollTo"
+  @send external scrollTo: (Dom.element, {"top": float, "behavior": string}) => unit = "scrollTo"
 }

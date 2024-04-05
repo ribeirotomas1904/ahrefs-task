@@ -2,7 +2,7 @@
 let make = () => {
   let (country, setCountry) = React.useState(() => None)
 
-  <div style={ReactDOM.Style.make(~padding="100px", ())}>
+  <div style={ReactDOM.Style.make(~padding="10px", ())}>
     <CountrySelect
       className="custom-class"
       country
