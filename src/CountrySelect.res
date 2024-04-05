@@ -178,6 +178,7 @@ let make = (
 
     dispatch(StartLoading)
 
+    // TODO: handle bad status code and network errors
     Fetch.get(
       "https://gist.githubusercontent.com/rusty-key/659db3f4566df459bd59c8a53dc9f71f/raw/4127f9550ef063121c564025f6d27dceeb279623/counties.json",
       ~signal=controller.signal,
@@ -189,16 +190,38 @@ let make = (
       | Some(countries) => dispatch(Load(countries))
       }
     })
-    // TODO: add error handling
-    // ->Promise.catch(_ => dispatch(Error)->Promise.resolve)
     ->Promise.done
 
     Some(() => AbortController.abort(controller))
   })
 
   switch state {
-  | Initial => React.string("TODO")
-  | Loading => React.string("TODO")
+  | Initial
+  | Error
+  | Loading =>
+    <div className={css["country-select"] ++ " " ++ className}>
+      // SELECTED COUNTRY
+      <div className={css["selected-country"]}>
+        <span> {React.string("Select country")} </span>
+        <TriangleIcon />
+      </div>
+      <div className={css["wrapper"]}>
+        // SEARCH INPUT
+        <div className={css["search-input-container"]}>
+          <SearchIcon className={css["search-icon"]} />
+          <input
+            disabled=true
+            className={css["search-input"]}
+            placeholder={"Search"}
+            defaultValue={switch state {
+            | Initial | Loaded(_) => ""
+            | Loading => "Loading..."
+            | Error => "Unexpected Error!"
+            }}
+          />
+        </div>
+      </div>
+    </div>
   | Loaded({
       countryOptions,
       searchInput,
@@ -208,7 +231,6 @@ let make = (
       countryOptionHeight,
       selectedCountryOption,
     }) =>
-    // TODO: deal with the case of countryOptionsFiltered having length 0
     let countryOptionsWithIndex = {
       countryOptions->Array.filter(countryOption =>
         countryOption.label
@@ -457,6 +479,5 @@ let make = (
         }}
       </div>
     </div>
-  | Error => React.string("TODO")
   }
 }
