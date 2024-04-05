@@ -208,16 +208,14 @@ let make = (
       countryOptionHeight,
       selectedCountryOption,
     }) =>
-    let countryOptionsWithIndex = {
-      countryOptions->Array.filter(countryOption =>
+    let countryOptionsWithIndex =
+      countryOptions
+      ->Array.filter(countryOption =>
         countryOption.label
         ->String.toLowerCase
         ->String.includes(searchInput->String.trim->String.toLowerCase)
       )
-    }
-
-    let countryOptionsWithIndex =
-      countryOptionsWithIndex->Array.mapWithIndex((countryOption, index) => (countryOption, index))
+      ->Array.mapWithIndex((countryOption, index) => (countryOption, index))
 
     let onChangeHandler = () => {
       countryOptionsWithIndex[selectedCountryOption]->Option.forEach(((countryOption, _)) => {
@@ -291,16 +289,20 @@ let make = (
               | "Enter" => onChangeHandler()
               | "Escape" =>
                 dispatch(SetIsDropdownOpen(false))
+
                 searchInputRef.current
                 ->Nullable.toOption
                 ->Option.forEach(Extensions.Dom.blur)
+
               | "ArrowUp" =>
                 ReactEvent.Keyboard.preventDefault(e)
 
+                let newSelectedCountryOption = selectedCountryOption - 1
+
                 let newSelectedCountryOption =
-                  selectedCountryOption - 1 < 0
+                  newSelectedCountryOption < 0
                     ? countryOptionsWithIndex->Array.length - 1
-                    : selectedCountryOption - 1
+                    : newSelectedCountryOption
 
                 if newSelectedCountryOption == countryOptionsWithIndex->Array.length - 1 {
                   viewportRef.current
@@ -311,7 +313,6 @@ let make = (
                       {
                         "top": countryOptionsWithIndex->Array.length->Int.toFloat *.
                           countryOptionHeight,
-                        "behavior": "instant",
                       },
                     )
                     setTimeout(() => {
@@ -320,7 +321,6 @@ let make = (
                         {
                           "top": countryOptionsWithIndex->Array.length->Int.toFloat *.
                             countryOptionHeight,
-                          "behavior": "instant",
                         },
                       )
                     }, 10)->ignore
@@ -336,7 +336,6 @@ let make = (
                       viewport,
                       {
                         "top": newSelectedCountryOption->Int.toFloat *. countryOptionHeight,
-                        "behavior": "instant",
                       },
                     )
                   )
@@ -347,17 +346,17 @@ let make = (
               | "ArrowDown" =>
                 ReactEvent.Keyboard.preventDefault(e)
 
+                let newSelectedCountryOption = selectedCountryOption + 1
+
                 let newSelectedCountryOption =
-                  selectedCountryOption + 1 > countryOptionsWithIndex->Array.length - 1
+                  newSelectedCountryOption > countryOptionsWithIndex->Array.length - 1
                     ? 0
-                    : selectedCountryOption + 1
+                    : newSelectedCountryOption
 
                 if newSelectedCountryOption == 0 {
                   viewportRef.current
                   ->Nullable.toOption
-                  ->Option.forEach(viewport =>
-                    Extensions.Dom.scrollTo(viewport, {"top": 0.0, "behavior": "instant"})
-                  )
+                  ->Option.forEach(viewport => Extensions.Dom.scrollTo(viewport, {"top": 0.0}))
                 } else if (
                   newSelectedCountryOption < optionsViewportStart ||
                     newSelectedCountryOption > optionsViewportEnd
@@ -370,7 +369,6 @@ let make = (
                       {
                         "top": (newSelectedCountryOption - (maxVisibleCountryOptions - 1))
                           ->Int.toFloat *. countryOptionHeight,
-                        "behavior": "auto",
                       },
                     )
                   })

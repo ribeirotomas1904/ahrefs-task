@@ -272,16 +272,15 @@ function CountrySelect(props) {
   var searchInput = state.searchInput;
   var countryOptions = state.countryOptions;
   var countryOptionsWithIndex = countryOptions.filter(function (countryOption) {
-        return countryOption.label.toLowerCase().includes(searchInput.trim().toLowerCase());
-      });
-  var countryOptionsWithIndex$1 = countryOptionsWithIndex.map(function (countryOption, index) {
+          return countryOption.label.toLowerCase().includes(searchInput.trim().toLowerCase());
+        }).map(function (countryOption, index) {
         return [
                 countryOption,
                 index
               ];
       });
   var onChangeHandler = function () {
-    Core__Option.forEach(countryOptionsWithIndex$1[selectedCountryOption], (function (param) {
+    Core__Option.forEach(countryOptionsWithIndex[selectedCountryOption], (function (param) {
             onChange(param[0].value);
             dispatch({
                   TAG: "SetIsDropdownOpen",
@@ -305,7 +304,7 @@ function CountrySelect(props) {
             prim.focus();
           }));
   };
-  var match$1 = countryOptionsWithIndex$1.length > 0;
+  var match$1 = countryOptionsWithIndex.length > 0;
   return JsxRuntime.jsxs("div", {
               children: [
                 JsxRuntime.jsx("div", {
@@ -357,53 +356,50 @@ function CountrySelect(props) {
                                           switch (match) {
                                             case "ArrowDown" :
                                                 e.preventDefault();
-                                                var newSelectedCountryOption = (selectedCountryOption + 1 | 0) > (countryOptionsWithIndex$1.length - 1 | 0) ? 0 : selectedCountryOption + 1 | 0;
-                                                if (newSelectedCountryOption === 0) {
+                                                var newSelectedCountryOption = selectedCountryOption + 1 | 0;
+                                                var newSelectedCountryOption$1 = newSelectedCountryOption > (countryOptionsWithIndex.length - 1 | 0) ? 0 : newSelectedCountryOption;
+                                                if (newSelectedCountryOption$1 === 0) {
                                                   Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
                                                           viewport.scrollTo({
-                                                                top: 0.0,
-                                                                behavior: "instant"
+                                                                top: 0.0
                                                               });
-                                                        }));
-                                                } else if (newSelectedCountryOption < optionsViewportStart || newSelectedCountryOption > optionsViewportEnd) {
-                                                  Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
-                                                          viewport.scrollTo({
-                                                                top: (newSelectedCountryOption - 13 | 0) * countryOptionHeight,
-                                                                behavior: "auto"
-                                                              });
-                                                        }));
-                                                }
-                                                return dispatch({
-                                                            TAG: "SetSelectedCountryOption",
-                                                            _0: newSelectedCountryOption
-                                                          });
-                                            case "ArrowUp" :
-                                                e.preventDefault();
-                                                var newSelectedCountryOption$1 = (selectedCountryOption - 1 | 0) < 0 ? countryOptionsWithIndex$1.length - 1 | 0 : selectedCountryOption - 1 | 0;
-                                                if (newSelectedCountryOption$1 === (countryOptionsWithIndex$1.length - 1 | 0)) {
-                                                  Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
-                                                          viewport.scrollTo({
-                                                                top: countryOptionsWithIndex$1.length * countryOptionHeight,
-                                                                behavior: "instant"
-                                                              });
-                                                          setTimeout((function () {
-                                                                  viewport.scrollTo({
-                                                                        top: countryOptionsWithIndex$1.length * countryOptionHeight,
-                                                                        behavior: "instant"
-                                                                      });
-                                                                }), 10);
                                                         }));
                                                 } else if (newSelectedCountryOption$1 < optionsViewportStart || newSelectedCountryOption$1 > optionsViewportEnd) {
                                                   Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
                                                           viewport.scrollTo({
-                                                                top: newSelectedCountryOption$1 * countryOptionHeight,
-                                                                behavior: "instant"
+                                                                top: (newSelectedCountryOption$1 - 13 | 0) * countryOptionHeight
                                                               });
                                                         }));
                                                 }
                                                 return dispatch({
                                                             TAG: "SetSelectedCountryOption",
                                                             _0: newSelectedCountryOption$1
+                                                          });
+                                            case "ArrowUp" :
+                                                e.preventDefault();
+                                                var newSelectedCountryOption$2 = selectedCountryOption - 1 | 0;
+                                                var newSelectedCountryOption$3 = newSelectedCountryOption$2 < 0 ? countryOptionsWithIndex.length - 1 | 0 : newSelectedCountryOption$2;
+                                                if (newSelectedCountryOption$3 === (countryOptionsWithIndex.length - 1 | 0)) {
+                                                  Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
+                                                          viewport.scrollTo({
+                                                                top: countryOptionsWithIndex.length * countryOptionHeight
+                                                              });
+                                                          setTimeout((function () {
+                                                                  viewport.scrollTo({
+                                                                        top: countryOptionsWithIndex.length * countryOptionHeight
+                                                                      });
+                                                                }), 10);
+                                                        }));
+                                                } else if (newSelectedCountryOption$3 < optionsViewportStart || newSelectedCountryOption$3 > optionsViewportEnd) {
+                                                  Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
+                                                          viewport.scrollTo({
+                                                                top: newSelectedCountryOption$3 * countryOptionHeight
+                                                              });
+                                                        }));
+                                                }
+                                                return dispatch({
+                                                            TAG: "SetSelectedCountryOption",
+                                                            _0: newSelectedCountryOption$3
                                                           });
                                             case "Enter" :
                                                 return onChangeHandler();
@@ -458,7 +454,7 @@ function CountrySelect(props) {
                         state.isDropdownOpen ? (
                             match$1 ? JsxRuntime.jsx("div", {
                                     children: JsxRuntime.jsx("div", {
-                                          children: countryOptionsWithIndex$1.slice(optionsViewportStart, optionsViewportEnd + 1 | 0).map(function (param) {
+                                          children: countryOptionsWithIndex.slice(optionsViewportStart, optionsViewportEnd + 1 | 0).map(function (param) {
                                                 var countryOptionIndex = param[1];
                                                 var countryOption = param[0];
                                                 return JsxRuntime.jsx(CountrySelect$CountryOption, {
@@ -494,13 +490,13 @@ function CountrySelect(props) {
                                               }),
                                           className: css["country-options-container"],
                                           style: {
-                                            height: (countryOptionsWithIndex$1.length * countryOptionHeight).toString() + "px"
+                                            height: (countryOptionsWithIndex.length * countryOptionHeight).toString() + "px"
                                           }
                                         }),
                                     ref: Caml_option.some(viewportRef),
                                     className: css.dropdown,
                                     style: {
-                                      height: (Math.min(countryOptionsWithIndex$1.length, 14) * countryOptionHeight + 5.0).toString() + "px"
+                                      height: (Math.min(countryOptionsWithIndex.length, 14) * countryOptionHeight + 5.0).toString() + "px"
                                     },
                                     tabIndex: -1,
                                     onScroll: (function (param) {
