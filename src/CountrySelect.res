@@ -1,7 +1,6 @@
 %%css.module(let css = "./CountrySelect.module.css")
 
 let maxVisibleCountryOptions = 14
-let countryOptionsOutsideViewport = 10
 
 type countryOption = {label: string, value: string}
 
@@ -139,7 +138,7 @@ module SearchIcon = {
 
 module TriangleIcon = {
   @react.component
-  let make = (~className) => {
+  let make = () => {
     <svg width="8" height="8" viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
       <path fillRule="evenodd" clipRule="evenodd" d="M0 2H8L4 7L0 2Z" fill="#333333" />
     </svg>
@@ -220,7 +219,7 @@ let make = (
       ->Nullable.toOption
       ->Option.forEach(viewport => {
         let optionsViewportStart =
-          Math.trunc(
+          Math.round(
             viewport->Extensions.Dom.scrollTop->Int.toFloat /. countryOptionHeight,
           )->Int.fromFloat
 
@@ -232,6 +231,7 @@ let make = (
         )
       })
 
+      // TODO: when the user finishes scrolling, it should focus on the search input, without reseting other state
       searchInputRef.current->Nullable.toOption->Option.forEach(Extensions.Dom.focus)
     }
 
@@ -249,13 +249,13 @@ let make = (
           <>
             <span className={`fi fi-${countryOption.value}`} />
             <span> {React.string(countryOption.label)} </span>
-            <TriangleIcon className="" />
+            <TriangleIcon />
           </>->Some
         })
         ->Option.getOr({
           <>
             <span> {React.string("Select Country")} </span>
-            <TriangleIcon className="" />
+            <TriangleIcon />
           </>
         })}
       </div>
@@ -309,7 +309,7 @@ let make = (
                       )
                     }, 10)->ignore
                   })
-                } else if newSelectedCountryOption < optionsViewportStart || true {
+                } else if newSelectedCountryOption < optionsViewportStart {
                   viewportRef.current
                   ->Nullable.toOption
                   ->Option.forEach(viewport =>
@@ -342,14 +342,15 @@ let make = (
                   ->Option.forEach(viewport =>
                     Extensions.Dom.scrollTo(viewport, {"top": 0.0, "behavior": "instant"})
                   )
-                } else if newSelectedCountryOption > optionsViewportEnd || true {
+                } else if newSelectedCountryOption > optionsViewportEnd {
                   viewportRef.current
                   ->Nullable.toOption
                   ->Option.forEach(viewport => {
                     Extensions.Dom.scrollTo(
                       viewport,
                       {
-                        "top": newSelectedCountryOption->Int.toFloat *. countryOptionHeight,
+                        "top": (newSelectedCountryOption - (maxVisibleCountryOptions - 1))
+                          ->Int.toFloat *. countryOptionHeight,
                         "behavior": "auto",
                       },
                     )
@@ -386,7 +387,7 @@ let make = (
                 ~height=(Math.Int.min(
                   countryOptionsWithIndex->Array.length,
                   maxVisibleCountryOptions,
-                )->Int.toFloat *. countryOptionHeight)->Float.toString ++ "px",
+                )->Int.toFloat *. countryOptionHeight +. 5.0)->Float.toString ++ "px",
                 (),
               )}
               onScroll={_ => onScroll()}
@@ -399,11 +400,8 @@ let make = (
                   (),
                 )}>
                 {countryOptionsWithIndex
-                ->Array.slice(
-                  ~start=Math.Int.max(optionsViewportStart - countryOptionsOutsideViewport, 0),
-                  ~end=optionsViewportEnd + 1 + countryOptionsOutsideViewport,
-                )
-                ->Array.mapWithIndex(((countryOption, countryOptionIndex), mapIndex) => {
+                ->Array.slice(~start=optionsViewportStart, ~end=optionsViewportEnd + 1)
+                ->Array.map(((countryOption, countryOptionIndex)) => {
                   <CountryOption
                     isSelected={countryOptionIndex == selectedCountryOption}
                     key={countryOption.value}
@@ -421,7 +419,7 @@ let make = (
                       })
                     }}
                     top={Float.toString(
-                      (optionsViewportStart + mapIndex)->Int.toFloat *. countryOptionHeight,
+                      countryOptionIndex->Int.toFloat *. countryOptionHeight,
                     ) ++ "px"}
                   />
                 })

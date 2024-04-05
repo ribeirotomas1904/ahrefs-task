@@ -274,7 +274,7 @@ function CountrySelect(props) {
     var onScroll = function () {
       console.log("ON SCROLL");
       Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
-              var optionsViewportStart = Math.trunc(viewport.scrollTop / countryOptionHeight) | 0;
+              var optionsViewportStart = Math.round(viewport.scrollTop / countryOptionHeight) | 0;
               dispatch({
                     TAG: "SetOptionsViewport",
                     optionsViewportStart: optionsViewportStart,
@@ -301,9 +301,7 @@ function CountrySelect(props) {
                                                       JsxRuntime.jsx("span", {
                                                             children: countryOption.label
                                                           }),
-                                                      JsxRuntime.jsx(CountrySelect$TriangleIcon, {
-                                                            className: ""
-                                                          })
+                                                      JsxRuntime.jsx(CountrySelect$TriangleIcon, {})
                                                     ]
                                                   }));
                                   })), JsxRuntime.jsxs(JsxRuntime.Fragment, {
@@ -311,9 +309,7 @@ function CountrySelect(props) {
                                     JsxRuntime.jsx("span", {
                                           children: "Select Country"
                                         }),
-                                    JsxRuntime.jsx(CountrySelect$TriangleIcon, {
-                                          className: ""
-                                        })
+                                    JsxRuntime.jsx(CountrySelect$TriangleIcon, {})
                                   ]
                                 })),
                         className: css["selected-country"],
@@ -350,10 +346,10 @@ function CountrySelect(props) {
                                                                   behavior: "instant"
                                                                 });
                                                           }));
-                                                  } else if (newSelectedCountryOption > optionsViewportEnd || true) {
+                                                  } else if (newSelectedCountryOption > optionsViewportEnd) {
                                                     Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
                                                             viewport.scrollTo({
-                                                                  top: newSelectedCountryOption * countryOptionHeight,
+                                                                  top: (newSelectedCountryOption - 13 | 0) * countryOptionHeight,
                                                                   behavior: "auto"
                                                                 });
                                                           }));
@@ -378,7 +374,7 @@ function CountrySelect(props) {
                                                                         });
                                                                   }), 10);
                                                           }));
-                                                  } else if (newSelectedCountryOption$1 < optionsViewportStart || true) {
+                                                  } else if (newSelectedCountryOption$1 < optionsViewportStart) {
                                                     Core__Option.forEach(Caml_option.nullable_to_opt(viewportRef.current), (function (viewport) {
                                                             viewport.scrollTo({
                                                                   top: newSelectedCountryOption$1 * countryOptionHeight,
@@ -442,7 +438,7 @@ function CountrySelect(props) {
                               }),
                           state.isDropdownOpen ? JsxRuntime.jsx("div", {
                                   children: JsxRuntime.jsx("div", {
-                                        children: countryOptionsWithIndex$1.slice(Math.max(optionsViewportStart - 10 | 0, 0), (optionsViewportEnd + 1 | 0) + 10 | 0).map(function (param, mapIndex) {
+                                        children: countryOptionsWithIndex$1.slice(optionsViewportStart, optionsViewportEnd + 1 | 0).map(function (param) {
                                               var countryOptionIndex = param[1];
                                               var countryOption = param[0];
                                               return JsxRuntime.jsx(CountrySelect$CountryOption, {
@@ -468,7 +464,7 @@ function CountrySelect(props) {
                                                                       
                                                                     }));
                                                             }),
-                                                          top: ((optionsViewportStart + mapIndex | 0) * countryOptionHeight).toString() + "px",
+                                                          top: (countryOptionIndex * countryOptionHeight).toString() + "px",
                                                           isSelected: countryOptionIndex === selectedCountryOption
                                                         }, countryOption.value);
                                             }),
@@ -480,7 +476,7 @@ function CountrySelect(props) {
                                   ref: Caml_option.some(viewportRef),
                                   className: css.dropdown,
                                   style: {
-                                    height: (Math.min(countryOptionsWithIndex$1.length, 14) * countryOptionHeight).toString() + "px"
+                                    height: (Math.min(countryOptionsWithIndex$1.length, 14) * countryOptionHeight + 5.0).toString() + "px"
                                   },
                                   tabIndex: -1,
                                   onScroll: (function (param) {
@@ -498,8 +494,6 @@ function CountrySelect(props) {
 
 var maxVisibleCountryOptions = 14;
 
-var countryOptionsOutsideViewport = 10;
-
 var initialState = "Initial";
 
 var make = CountrySelect;
@@ -507,7 +501,6 @@ var make = CountrySelect;
 export {
   css ,
   maxVisibleCountryOptions ,
-  countryOptionsOutsideViewport ,
   parseCountries ,
   reducer ,
   initialState ,
