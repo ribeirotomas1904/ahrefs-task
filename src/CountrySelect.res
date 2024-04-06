@@ -263,7 +263,7 @@ let make = (
         ->Option.flatMap(countryOption => {
           <>
             <span className={`fi fi-${countryOption.value}`} />
-            <span> {React.string(countryOption.label)} </span>
+            <span title=countryOption.label> {React.string(countryOption.label)} </span>
             <Icon.TriangleIcon />
           </>->Some
         })
