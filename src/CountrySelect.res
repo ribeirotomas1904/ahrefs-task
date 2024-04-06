@@ -125,6 +125,7 @@ module CountryOption = {
   ) => {
     <div
       className={css["country-option"] ++ " " ++ (isSelected ? css["country-option-selected"] : "")}
+      title=label
       style={ReactDOM.Style.make(~top, ())}
       onClick={_ => onChange()}
       onTouchEnd={_ => onChange()}
