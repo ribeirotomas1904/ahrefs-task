@@ -1,6 +1,7 @@
 %%css.module(let css = "./CountrySelect.module.css")
 
 let maxVisibleCountryOptions = 14
+let countryOptionsOutsideViewport = 10
 
 type countryOption = {label: string, value: string}
 
@@ -425,7 +426,10 @@ let make = (
                 (),
               )}>
               {countryOptionsWithIndex
-              ->Array.slice(~start=optionsViewportStart, ~end=optionsViewportEnd + 1)
+              ->Array.slice(
+                ~start=Math.Int.max(optionsViewportStart - countryOptionsOutsideViewport, 0),
+                ~end=optionsViewportEnd + 1 + countryOptionsOutsideViewport,
+              )
               ->Array.map(((countryOption, countryOptionIndex)) => {
                 <CountryOption
                   isSelected={countryOptionIndex == selectedCountryOption}

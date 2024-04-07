@@ -145,13 +145,14 @@ function CountrySelect$CountryOption(props) {
   var onCancelSelect = props.onCancelSelect;
   var onMouseEnter = props.onMouseEnter;
   var onChange = props.onChange;
+  var label = props.label;
   return JsxRuntime.jsxs("div", {
               children: [
                 JsxRuntime.jsx("span", {
                       className: "fi fi-" + props.value
                     }),
                 JsxRuntime.jsx("span", {
-                      children: props.label
+                      children: label
                     })
               ],
               ref: Caml_option.some(props.onRef),
@@ -161,6 +162,7 @@ function CountrySelect$CountryOption(props) {
               style: {
                 top: props.top
               },
+              title: label,
               onClick: (function (param) {
                   onChange();
                 }),
@@ -319,7 +321,8 @@ function CountrySelect(props) {
                                                           className: "fi fi-" + countryOption.value
                                                         }),
                                                     JsxRuntime.jsx("span", {
-                                                          children: countryOption.label
+                                                          children: countryOption.label,
+                                                          title: countryOption.label
                                                         }),
                                                     JsxRuntime.jsx(Icon.TriangleIcon.make, {})
                                                   ]
@@ -454,7 +457,7 @@ function CountrySelect(props) {
                         state.isDropdownOpen ? (
                             match$1 ? JsxRuntime.jsx("div", {
                                     children: JsxRuntime.jsx("div", {
-                                          children: countryOptionsWithIndex.slice(optionsViewportStart, optionsViewportEnd + 1 | 0).map(function (param) {
+                                          children: countryOptionsWithIndex.slice(Math.max(optionsViewportStart - 10 | 0, 0), (optionsViewportEnd + 1 | 0) + 10 | 0).map(function (param) {
                                                 var countryOptionIndex = param[1];
                                                 var countryOption = param[0];
                                                 return JsxRuntime.jsx(CountrySelect$CountryOption, {
@@ -521,6 +524,8 @@ function CountrySelect(props) {
 
 var maxVisibleCountryOptions = 14;
 
+var countryOptionsOutsideViewport = 10;
+
 var initialState = "Initial";
 
 var make = CountrySelect;
@@ -528,6 +533,7 @@ var make = CountrySelect;
 export {
   css ,
   maxVisibleCountryOptions ,
+  countryOptionsOutsideViewport ,
   parseCountries ,
   reducer ,
   initialState ,
